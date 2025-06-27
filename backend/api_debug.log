@@ -1,0 +1,8 @@
+HTTP Code: 200
+Resposta: {"sucesso":true,"mensagem":"Colaborador ja cadastrado","id":26}
+HTTP Code: 200
+Resposta: {"sucesso":true,"mensagem":"Colaborador cadastrado com sucesso","id":"5"}
+HTTP Code: 200
+Resposta: {"sucesso":true,"mensagem":"Colaborador ja cadastrado","id":26}
+HTTP Code: 200
+Resposta: {"sucesso":true,"mensagem":"Colaborador cadastrado com sucesso","id":"6"}
