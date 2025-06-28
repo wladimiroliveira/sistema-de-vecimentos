@@ -1,10 +1,10 @@
 <?php
-session_start();
+/* session_start();
 
 if (!isset($_SESSION['logado']) || $_SESSION['logado'] !== true) {
     header('Location: https://hipersenna.com.br/login.php');
     exit();
-}
+} */
 
 //include('config/config.php');
 
@@ -12,15 +12,15 @@ if (!isset($_SESSION['logado']) || $_SESSION['logado'] !== true) {
 //include('config/navbar.php');
 
 // Obtém o nome do usuário logado
-$user_name = $_SESSION['nome_usuario'];
+// $user_name = $_SESSION['nome_usuario'];
 
 // Obtém informações adicionais do usuário logado
-$sql = 'SELECT user_filial FROM usuarios WHERE user_name = :user_name';
-$query = $conexao_pdo->prepare($sql);
-$query->bindParam(':user_name', $user_name, PDO::PARAM_STR);
-$query->execute();
-$usuario_info = $query->fetch(PDO::FETCH_ASSOC);
-$row_filial = $usuario_info['user_filial'] ?? '';
+// $sql = 'SELECT user_filial FROM usuarios WHERE user_name = :user_name';
+// $query = $conexao_pdo->prepare($sql);
+// $query->bindParam(':user_name', $user_name, PDO::PARAM_STR);
+// $query->execute();
+// $usuario_info = $query->fetch(PDO::FETCH_ASSOC);
+// $row_filial = $usuario_info['user_filial'] ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
