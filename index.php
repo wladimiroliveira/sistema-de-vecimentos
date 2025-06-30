@@ -1,26 +1,67 @@
 <?php
+// Iniciar a sessão
 session_start();
 
+// Configurações iniciais para os cookies de sessão
+session_set_cookie_params([
+    'lifetime' => 1800,
+    'secure' => true,   // True se estiver usando HTTPS
+    'httponly' => true, // Impede o acesso ao cookie via JavaScript
+    'samesite' => 'Strict' // Limita o envio de cookies a solicitações do mesmo site
+]);
+
+// Verifica se o usuário está logado.
 if (!isset($_SESSION['logado']) || $_SESSION['logado'] !== true) {
-    header('Location: https://hipersenna.com.br/login.php');
+    header('Location: ../login.php');
     exit();
 }
 
-//include('config/config.php');
+// Define o tempo máximo de inatividade permitido (ex: 30 minutos)
+$max_inatividade = 1800;  // em segundos
 
-// Inclui a navbar
-//include('config/navbar.php');
+// Verifica se a variável de sessão foi definida
+if (isset($_SESSION['ultimo_acesso']) && (time() - $_SESSION['ultimo_acesso'] > $max_inatividade)) {
+    // Sessão expirou
+    session_unset();   // Limpa as variáveis de sessão
+    session_destroy(); // Destrói a sessão
+    header('Location: ../login.php'); // Redireciona para a página de login
+    exit;
+}
 
-// Obtém o nome do usuário logado
-$user_name = $_SESSION['nome_usuario'];
+// Regenera ID da sessão para prevenir ataques de fixação de sessão
+session_regenerate_id(true);
 
-// Obtém informações adicionais do usuário logado
-$sql = 'SELECT user_filial FROM usuarios WHERE user_name = :user_name';
-$query = $conexao_pdo->prepare($sql);
-$query->bindParam(':user_name', $user_name, PDO::PARAM_STR);
-$query->execute();
-$usuario_info = $query->fetch(PDO::FETCH_ASSOC);
-$row_filial = $usuario_info['user_filial'] ?? '';
+// Atualiza o tempo de último acesso na sessão
+$_SESSION['ultimo_acesso'] = time();
+
+// Verifica se o usuário tem permissão para acessar
+$permissoesPermitidas = ['a', 'u', 'e'];
+
+if (!isset($_SESSION['user_permissao']) || !in_array($_SESSION['user_permissao'], $permissoesPermitidas)) {
+    header('Location: ../home.php');
+    exit();
+}
+
+// Inclui o arquivo de configuração
+include('../config/config.php');
+include('../config/navbar.php');
+
+// --- Recupera Dados do Usuário da Sessão ---
+// Usa o operador de coalescência nula (??) para fornecer um valor padrão se a variável de sessão não estiver definida
+$user_filial = $_SESSION['user_filial'] ?? '';
+$user_name = $_SESSION['nome_usuario'] ?? '';
+
+// Converte a matrícula para inteiro, se existir, ou define como null
+$matricula = isset($_SESSION['matricula']) ? (int) $_SESSION['matricula'] : null;
+
+// Define a data atual no formato 'dia-Mês-Ano'
+$data_lancamento = date('d-M-Y', strtotime('today'));
+
+// --- Verificação de Matrícula (Opcional, mas recomendado para dados críticos) ---
+// Interrompe a execução do script e exibe um erro se a matrícula for inválida
+if ($matricula === null) {
+    die("Erro: Matrícula do usuário não encontrada ou inválida.");
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -28,14 +69,31 @@ $row_filial = $usuario_info['user_filial'] ?? '';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./css/reset.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4Q6Gf2aSP4eDXB8Miphtr37CMZZQ5oXLH2yaXMJ2w8e2ZtHTl7GptT4jmndRuHDT" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="./css/formProd.css">
+    
+    <!-- Bootstrap Bundle JS (inclui o Popper.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <link rel="stylesheet" href="../config/styles.css">
+
     <script src="./js/dados.js" defer></script>
-    <script src="./js/formProd.js?=2" defer></script>
+    <script src="./js/formProd.js" defer></script>
     <script src="./js/descricao.js" defer></script>
-    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/style.css?=v2">
+    <link rel="stylesheet" href="./css/formProd.css?=v3">
+    <link rel="shortcut icon" href="./assets/img/icon/logo-icone.ico" type="image/x-icon">
+
     <title>Vencimento</title>
+    <script>
+        window.userDataFromPHP = <?php
+            echo json_encode([
+                'nome' => $user_name,
+                'matricula' => $matricula,
+                'filial' => $user_filial
+            ]);
+        ?>;
+        
+        console.log("Dados do usuário do PHP carregados:", window.userDataFromPHP);
+    </script>
 </head>
 <body>
 <header class="cabecalho">
@@ -43,9 +101,19 @@ $row_filial = $usuario_info['user_filial'] ?? '';
         <div class="logo">
             <img src="./assets/img/logo-hipersenna.png" alt="Logo do HiperSenna">
         </div>
+        <div class="user-info" style="margin-left: auto; padding-right: 20px; color: white;">
+            Olá, <strong><?= htmlspecialchars($user_name) ?></strong> (Matrícula: <?= htmlspecialchars($matricula) ?>) - Filial: <strong><?= htmlspecialchars($user_filial) ?></strong>
+        </div>
     </nav>
 </header>
 <main class="conteudo">
+<div class="dados_container">
+    <ul>
+        <li id="userNome"><?php echo $user_name ;?></li>
+        <li id="userMatricula"><?php echo $matricula ;?></li>
+        <li id="userFilial"><?php echo $user_filial ;?></li>
+    </ul>
+</div>
 <section class="validade">
     <h1 class="titulo">Validade</h1>
     <p>Insira as informações dos produtos abaixo</p>
@@ -85,12 +153,12 @@ $row_filial = $usuario_info['user_filial'] ?? '';
                         </tr>
                     </thead>
                     <tbody id="produtosList">
-                         
+                             
                     </tbody>
                 </table>
             </div>
             <div class="button_container">
-                <a href="./index.html"><button type="button" class="btn btn-secondary">Voltar</button></a>
+                <a href="./index.php"><button type="button" class="btn btn-secondary">Voltar</button></a>
                 <button type="submit" class="btn btn-primary" id="next">Enviar</button>
             </div>
         </form>

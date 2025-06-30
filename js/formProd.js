@@ -4,6 +4,11 @@ let dados = JSON.parse(localStorage.getItem('dados')) || {
     prod: { itens: [] }
 };
 
+// Obter os valores dos campos hidden (preenchidos pelo PHP no index.php)
+const hiddenFilial = document.getElementById('filial');
+const hiddenMatricula = document.getElementById('matricula');
+const hiddenNome = document.getElementById('nome');
+
 const formProd = document.querySelector('.form__validade_prod');
 const insertBtn = document.getElementById('prodInserir');
 const inputCodprod = document.getElementById('codProd');
@@ -12,6 +17,15 @@ const inputData = document.getElementById('data');
 const inputQuant = document.getElementById('quantidade');
 const prodTable = document.getElementById('prodTable');
 const prodList = document.getElementById('produtosList');
+const userInfo = {
+    nome: document.getElementById('userNome').innerHTML,
+    matricula: document.getElementById('userMatricula').innerHTML,
+    filial: document.getElementById('userFilial').innerHTML
+};
+
+dados['user']['nome'] = userInfo['nome'];
+dados['user']['matricula'] = userInfo['matricula'];
+dados['user']['filial'] = userInfo['filial'];
 
 // Função para inserir ou somar quantidade
 function inserirOuSomarProduto(codprod, descricao, validade, quantidade) {
@@ -94,7 +108,7 @@ formProd.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     try {
-        const response = await fetch('http://localhost/validade_hipersenna/backend/dadosValidade.php', {
+        const response = await fetch('https://hipersenna.com.br/validade/backend/dadosValidade.php', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -104,13 +118,14 @@ formProd.addEventListener('submit', async (e) => {
         
         const result = await response.json();
         console.log("Resposta:", result);
-        
+        console.log(dados);
         if (result.sucesso) {
             // Redireciona para outra página, por exemplo, sucesso.html
             window.location.href = 'success.html';
         } else {
             alert(result.mensagem || 'Erro ao enviar dados.');
         }
+
     } catch (e) {
         console.error('Erro ao interpretar JSON:', e);
         alert('Erro inesperado na resposta do servidor.');

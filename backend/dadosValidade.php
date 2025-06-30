@@ -52,8 +52,8 @@ $user = [
 $colabToken = '2f5cf3d19453e8c3027ac6f9d6b3972b'; // colabToken
 
 // Configurações das APIs
-$urlColab = 'http://localhost/validade_hipersenna/api/colab/colab.php';
-$urlValidade = 'http://localhost/validade_hipersenna/api/validade/validade.php';
+$urlColab = 'https://hipersenna.com.br/dev_assets/api/colab/colab.php';
+$urlValidade = 'https://hipersenna.com.br/dev_assets/api/validade/validade.php';
 
 // Função para enviar dados para a API
 function sendDados($url, $dados, $colabToken){
@@ -94,10 +94,10 @@ if ($colabResponse['httpCode'] !== 200) {
     echo json_encode([
         'sucesso' => false, 
         'mensagem' => 'Erro ao cadastrar cliente',
-        'detalhes' => $colabResponse ?? null,
+        'detalhes' => $colabResponse['response'] ?? null,
         'debug' => [
             'url_api' => $urlColab,
-            'dados_enviados' => $dados['user'],
+            'dados_enviados' => $dados['cliente'],
             'resposta_http' => $colabResponse['httpCode'],
             'resposta_completa' => $colabResponse
         ]
@@ -135,4 +135,5 @@ echo json_encode([
     'colab_id' => $colabResponse['response']['id'] ?? null,
     'validade_id' => $validadeResponse['response']['id'] ?? null
 ]);
+
 exit;
